@@ -1,45 +1,73 @@
-import {Context} from 'koa';
-import {Method, Header, StatusCode} from '@shopify/network';
+import Shopify from '@shopify/shopify-api';
+import { Session } from '@shopify/shopify-api/dist/auth/session';
 
-import {NextFunction} from '../types';
+import {Context} from 'koa';
+
+import {AccessMode, NextFunction} from '../types';
 import {TEST_COOKIE_NAME, TOP_LEVEL_OAUTH_COOKIE_NAME} from '../index';
 
 import {Routes} from './types';
 import {redirectToAuth} from './utilities';
+import {DEFAULT_ACCESS_MODE} from '../auth';
+import { HttpResponseError } from '@shopify/shopify-api/dist/error';
 
-export function verifyToken(routes: Routes) {
+export const REAUTH_HEADER = 'X-Shopify-API-Request-Failure-Reauthorize';
+export const REAUTH_URL_HEADER = 'X-Shopify-API-Request-Failure-Reauthorize-Url';
+
+export function verifyToken(routes: Routes, accessMode: AccessMode = DEFAULT_ACCESS_MODE, returnHeader = false) {
   return async function verifyTokenMiddleware(
     ctx: Context,
     next: NextFunction,
   ) {
-    const {session} = ctx;
+    let session: Session | undefined;
+    session = await Shopify.Utils.loadCurrentSession(ctx.req, ctx.res, accessMode === 'online');
 
-    if (session && session.accessToken) {
-      ctx.cookies.set(TOP_LEVEL_OAUTH_COOKIE_NAME);
-      // If a user has installed the store previously on their shop, the accessToken can be stored in session.
-      // we need to check if the accessToken is valid, and the only way to do this is by hitting the api.
-      const response = await fetch(
-        `https://${session.shop}/admin/metafields.json`,
-        {
-          method: Method.Post,
-          headers: {
-            [Header.ContentType]: 'application/json',
-            'X-Shopify-Access-Token': session.accessToken,
-          },
-        },
-      );
+    if (session) {
+      const scopesChanged = !Shopify.Context.SCOPES.equals(session.scope);
 
-      if (response.status === StatusCode.Unauthorized) {
-        redirectToAuth(routes, ctx);
-        return;
+      if (!scopesChanged && session.accessToken && (!session.expires || session.expires >= new Date())) {
+        try {
+          // make a request to make sure oauth has succeeded, retry otherwise
+          const client = new Shopify.Clients.Rest(session.shop, session.accessToken)
+          await client.get({ path: "metafields", query: {'limit': 1} }) 
+
+          ctx.cookies.set(TOP_LEVEL_OAUTH_COOKIE_NAME);
+          await next();
+          return;
+        } catch(e) {
+          if (e instanceof HttpResponseError && e.code == 401){
+              // only catch 401 errors
+          } else {
+            throw e
+          }
+        }
       }
-
-      await next();
-      return;
     }
 
     ctx.cookies.set(TEST_COOKIE_NAME, '1');
 
-    redirectToAuth(routes, ctx);
+    if (returnHeader) {
+      ctx.response.status = 403;
+      ctx.response.set(REAUTH_HEADER, '1');
+
+      let shop: string|undefined = undefined;
+      if (session) {
+        shop = session.shop;
+      } else if (Shopify.Context.IS_EMBEDDED_APP) {
+        const authHeader: string|undefined = ctx.req.headers.authorization;
+        const matches = authHeader?.match(/Bearer (.*)/);
+        if (matches) {
+          const payload = Shopify.Utils.decodeSessionToken(matches[1]);
+          shop = payload.dest.replace('https://', '');
+        }
+      }
+
+      if (shop) {
+        ctx.response.set(REAUTH_URL_HEADER, `${routes.authRoute}?shop=${shop}`);
+      }
+      return;
+    } else {
+      redirectToAuth(routes, ctx);
+    }
   };
 }

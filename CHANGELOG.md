@@ -6,9 +6,60 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [4.1.4] - 2021-07-19
+### Fixed
+- Retry OAuth if cookie / session has expired on callback [112](https://github.com/Shopify/koa-shopify-auth/pull/112)
+
+## [4.1.3] - 2021-04-22
+### Fixed
+- Fix authentication error if the Shopify session ended before its expiration date [94](https://github.com/Shopify/koa-shopify-auth/pull/94)
+
+## [4.1.2] - 2021-03-30
+
+### Fixed
+- Remove `samesite=none` setting from `cookie-options`. [83](https://github.com/Shopify/koa-shopify-auth/pull/83)
+
+## [4.1.1] - 2021-03-26
+
+### Added
+- Bumped `@shopify/shopify-api` version to v1.2.1 to include the new API version (`April21`). [80](https://github.com/Shopify/koa-shopify-auth/pull/80)
+
+## [4.1.0] - 2021-03-23
+
 ### Added
 
-- Provide user data via Koa Session
+- Add `returnHeader` option to `verifyRequest`, which allows using the middleware on XHR requests. [78](https://github.com/Shopify/koa-shopify-auth/pull/78)
+
+## [4.0.3] - 2021-03-16
+
+### Fixed
+
+- Fix bad import path for type AccessMode. [63](https://github.com/Shopify/koa-shopify-auth/pull/63)
+
+## [4.0.2] - 2021-03-03
+
+### Fixed
+
+- Ensure both `shopifyAuth` and `verifyRequest` work in offline mode. [59](https://github.com/Shopify/koa-shopify-auth/pull/59)
+
+## [4.0.1] - 2021-02-26
+
+### Fixed
+
+- Sets the `USER_AGENT_PREFIX` on `Shopify.Context` for usage tracking data. [55](https://github.com/Shopify/koa-shopify-auth/pull/55)
+
+## [4.0.0] - 2021-02-25
+
+### Added
+
+- [Feature] Start using the new Shopify library instead of implementing all of the server-side functions. [54](https://github.com/Shopify/koa-shopify-auth/pull/54)
+- Sets the `USER_AGENT_PREFIX` on `Shopify.Context` for usage tracking data. [51](https://github.com/Shopify/koa-shopify-auth/pull/51)
+
+## [3.2.0] - 2020-12-01
+
+- [Feature] Add missing associated user data to the session [23](https://github.com/Shopify/koa-shopify-auth/pull/23)
+- Fix inconsistency in authentication path prefix to remove trailing slash [29](https://github.com/Shopify/koa-shopify-auth/pull/29)
 
 ## [3.1.72] - 2020-10-16
 

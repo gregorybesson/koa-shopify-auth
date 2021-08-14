@@ -1,3 +1,4 @@
+import '../../test/test_helper';
 import {createMockContext} from '@shopify/jest-koa-mocks';
 
 import getCookieOptions from '../cookie-options';
@@ -12,7 +13,6 @@ describe('Get cookie options', () => {
     });
     const options = getCookieOptions(ctx);
     expect(options).toStrictEqual({
-      sameSite: 'none',
       secure: true,
     });
   });
