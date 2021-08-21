@@ -56,6 +56,9 @@ export default function createShopifyAuth(options: OAuthStartOptions) {
 
   return async function shopifyAuth(ctx: Context, next: NextFunction) {
     ctx.cookies.secure = true;
+    if (ctx.state['accessMode']) {
+      config.accessMode = ctx.state['accessMode']
+    }
 
     if (
       ctx.path === oAuthStartPath &&

@@ -1,41 +1,74 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifyToken = void 0;
+exports.verifyToken = exports.REAUTH_URL_HEADER = exports.REAUTH_HEADER = void 0;
 var tslib_1 = require("tslib");
-var network_1 = require("@shopify/network");
+var shopify_api_1 = tslib_1.__importDefault(require("@shopify/shopify-api"));
 var index_1 = require("../index");
 var utilities_1 = require("./utilities");
-function verifyToken(routes) {
+var auth_1 = require("../auth");
+var error_1 = require("@shopify/shopify-api/dist/error");
+exports.REAUTH_HEADER = 'X-Shopify-API-Request-Failure-Reauthorize';
+exports.REAUTH_URL_HEADER = 'X-Shopify-API-Request-Failure-Reauthorize-Url';
+function verifyToken(routes, accessMode, returnHeader) {
+    if (accessMode === void 0) { accessMode = auth_1.DEFAULT_ACCESS_MODE; }
+    if (returnHeader === void 0) { returnHeader = false; }
     return function verifyTokenMiddleware(ctx, next) {
         return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var session, response;
-            var _a;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        session = ctx.session;
-                        if (!(session && session.accessToken)) return [3 /*break*/, 3];
-                        ctx.cookies.set(index_1.TOP_LEVEL_OAUTH_COOKIE_NAME);
-                        return [4 /*yield*/, fetch("https://" + session.shop + "/admin/metafields.json", {
-                                method: network_1.Method.Post,
-                                headers: (_a = {},
-                                    _a[network_1.Header.ContentType] = 'application/json',
-                                    _a['X-Shopify-Access-Token'] = session.accessToken,
-                                    _a),
-                            })];
+            var session, scopesChanged, client, e_1, shop, authHeader, matches, payload;
+            return tslib_1.__generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, shopify_api_1.default.Utils.loadCurrentSession(ctx.req, ctx.res, accessMode === 'online')];
                     case 1:
-                        response = _b.sent();
-                        if (response.status === network_1.StatusCode.Unauthorized) {
-                            utilities_1.redirectToAuth(routes, ctx);
+                        session = _a.sent();
+                        if (!session) return [3 /*break*/, 6];
+                        scopesChanged = !shopify_api_1.default.Context.SCOPES.equals(session.scope);
+                        if (!(!scopesChanged && session.accessToken && (!session.expires || session.expires >= new Date()))) return [3 /*break*/, 6];
+                        _a.label = 2;
+                    case 2:
+                        _a.trys.push([2, 5, , 6]);
+                        client = new shopify_api_1.default.Clients.Rest(session.shop, session.accessToken);
+                        return [4 /*yield*/, client.get({ path: "metafields", query: { 'limit': 1 } })];
+                    case 3:
+                        _a.sent();
+                        ctx.cookies.set(index_1.TOP_LEVEL_OAUTH_COOKIE_NAME);
+                        return [4 /*yield*/, next()];
+                    case 4:
+                        _a.sent();
+                        return [2 /*return*/];
+                    case 5:
+                        e_1 = _a.sent();
+                        if (e_1 instanceof error_1.HttpResponseError && e_1.code == 401) {
+                            // only catch 401 errors
+                        }
+                        else {
+                            throw e_1;
+                        }
+                        return [3 /*break*/, 6];
+                    case 6:
+                        ctx.cookies.set(index_1.TEST_COOKIE_NAME, '1');
+                        if (returnHeader) {
+                            ctx.response.status = 403;
+                            ctx.response.set(exports.REAUTH_HEADER, '1');
+                            shop = undefined;
+                            if (session) {
+                                shop = session.shop;
+                            }
+                            else if (shopify_api_1.default.Context.IS_EMBEDDED_APP) {
+                                authHeader = ctx.req.headers.authorization;
+                                matches = authHeader === null || authHeader === void 0 ? void 0 : authHeader.match(/Bearer (.*)/);
+                                if (matches) {
+                                    payload = shopify_api_1.default.Utils.decodeSessionToken(matches[1]);
+                                    shop = payload.dest.replace('https://', '');
+                                }
+                            }
+                            if (shop) {
+                                ctx.response.set(exports.REAUTH_URL_HEADER, routes.authRoute + "?shop=" + shop);
+                            }
                             return [2 /*return*/];
                         }
-                        return [4 /*yield*/, next()];
-                    case 2:
-                        _b.sent();
-                        return [2 /*return*/];
-                    case 3:
-                        ctx.cookies.set(index_1.TEST_COOKIE_NAME, '1');
-                        utilities_1.redirectToAuth(routes, ctx);
+                        else {
+                            utilities_1.redirectToAuth(routes, ctx);
+                        }
                         return [2 /*return*/];
                 }
             });
