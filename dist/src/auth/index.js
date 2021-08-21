@@ -37,21 +37,20 @@ function createShopifyAuth(options) {
     var requestStorageAccess = create_request_storage_access_1.default(config);
     set_user_agent_1.default();
     return function shopifyAuth(ctx, next) {
+        var _a;
         return tslib_1.__awaiter(this, void 0, void 0, function () {
-            var shop, redirectUrl, _a, e_1;
-            return tslib_1.__generator(this, function (_b) {
-                switch (_b.label) {
+            var shop, redirectUrl, _b, e_1;
+            return tslib_1.__generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
                         ctx.cookies.secure = true;
-                        if (ctx.state['accessMode']) {
-                            config.accessMode = ctx.state['accessMode'];
-                        }
+                        config.accessMode = (_a = ctx.state['accessMode']) !== null && _a !== void 0 ? _a : config.accessMode;
                         if (!(ctx.path === oAuthStartPath &&
                             !hasCookieAccess(ctx) &&
                             !grantedStorageAccess(ctx))) return [3 /*break*/, 2];
                         return [4 /*yield*/, requestStorageAccess(ctx)];
                     case 1:
-                        _b.sent();
+                        _c.sent();
                         return [2 /*return*/];
                     case 2:
                         if (!(ctx.path === inlineOAuthPath ||
@@ -63,35 +62,35 @@ function createShopifyAuth(options) {
                         ctx.cookies.set(exports.TOP_LEVEL_OAUTH_COOKIE_NAME, '', cookie_options_1.default(ctx));
                         return [4 /*yield*/, shopify_api_1.default.Auth.beginAuth(ctx.req, ctx.res, shop, oAuthCallbackPath, config.accessMode === 'online')];
                     case 3:
-                        redirectUrl = _b.sent();
+                        redirectUrl = _c.sent();
                         ctx.redirect(redirectUrl);
                         return [2 /*return*/];
                     case 4:
                         if (!(ctx.path === oAuthStartPath)) return [3 /*break*/, 6];
                         return [4 /*yield*/, topLevelOAuthRedirect(ctx)];
                     case 5:
-                        _b.sent();
+                        _c.sent();
                         return [2 /*return*/];
                     case 6:
                         if (!(ctx.path === oAuthCallbackPath)) return [3 /*break*/, 14];
-                        _b.label = 7;
+                        _c.label = 7;
                     case 7:
-                        _b.trys.push([7, 12, , 13]);
+                        _c.trys.push([7, 12, , 13]);
                         return [4 /*yield*/, shopify_api_1.default.Auth.validateAuthCallback(ctx.req, ctx.res, ctx.query)];
                     case 8:
-                        _b.sent();
-                        _a = ctx.state;
+                        _c.sent();
+                        _b = ctx.state;
                         return [4 /*yield*/, shopify_api_1.default.Utils.loadCurrentSession(ctx.req, ctx.res, config.accessMode === 'online')];
                     case 9:
-                        _a.shopify = _b.sent();
+                        _b.shopify = _c.sent();
                         if (!config.afterAuth) return [3 /*break*/, 11];
                         return [4 /*yield*/, config.afterAuth(ctx)];
                     case 10:
-                        _b.sent();
-                        _b.label = 11;
+                        _c.sent();
+                        _c.label = 11;
                     case 11: return [3 /*break*/, 13];
                     case 12:
-                        e_1 = _b.sent();
+                        e_1 = _c.sent();
                         switch (true) {
                             case (e_1 instanceof shopify_api_1.default.Errors.InvalidOAuthError):
                                 ctx.throw(400, e_1.message);
@@ -111,11 +110,11 @@ function createShopifyAuth(options) {
                         if (!(ctx.path === enableCookiesPath)) return [3 /*break*/, 16];
                         return [4 /*yield*/, enableCookies(ctx)];
                     case 15:
-                        _b.sent();
+                        _c.sent();
                         return [2 /*return*/];
                     case 16: return [4 /*yield*/, next()];
                     case 17:
-                        _b.sent();
+                        _c.sent();
                         return [2 /*return*/];
                 }
             });
