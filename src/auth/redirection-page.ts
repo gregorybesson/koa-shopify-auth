@@ -12,6 +12,7 @@ export default function redirectionScript({origin, redirectTo, apiKey}) {
           var Redirect = AppBridge.actions.Redirect;
           var app = createApp({
             apiKey: "${apiKey}",
+            host: "${host}",
             shopOrigin: "${encodeURI(origin)}",
           });
           var redirect = Redirect.create(app);
