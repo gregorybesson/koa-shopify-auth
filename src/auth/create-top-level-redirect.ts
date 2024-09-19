@@ -16,6 +16,7 @@ export default function createTopLevelRedirect(apiKey: string, path: string) {
       origin: shop,
       redirectTo: `https://${host}${path}?${queryString}`,
       apiKey,
+      host,
     });
   };
 }
