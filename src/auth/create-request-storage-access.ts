@@ -20,7 +20,7 @@ export default function createRequestStorageAccess({
 }: OAuthStartOptions) {
   return function requestStorage(ctx: Context) {
     const {query} = ctx;
-    const {shop} = query;
+    const {shop, host} = query;
 
     if (shop == null) {
       ctx.throw(400, Error.ShopParamMissing);
@@ -40,10 +40,11 @@ export default function createRequestStorageAccess({
 
   <script>
     window.apiKey = "${Shopify.Context.API_KEY}";
+    window.host = "${host}";
     window.shopOrigin = "https://${encodeURIComponent(shop)}";
     ${itpHelper}
     ${storageAccessHelper}
-    ${requestStorageAccess(shop, prefix)}
+    ${requestStorageAccess(shop, host, prefix)}
   </script>
 </head>
 <body>
