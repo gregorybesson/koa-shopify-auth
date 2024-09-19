@@ -14,7 +14,7 @@ export default function createTopLevelRedirect(apiKey: string, path: string) {
 
     ctx.body = redirectionPage({
       origin: shop,
-      redirectTo: `https://${host}${path}?${queryString}`,
+      redirectTo: `https://${ctx.host}${path}?${queryString}`,
       apiKey,
       host,
     });
